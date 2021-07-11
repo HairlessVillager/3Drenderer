@@ -162,19 +162,38 @@ class Arrow3 {
 };
 
 class Object {
-	public :
+	private :
+		bool cut(Arrow3& arr, double n);
 		vector<Arrow3> edges;
-//		Vector3 pdv;
-//		Vector3 psv;
-//		Vector3 pav;
 
+	public :
 		Object() {
 			;
 		}
-		void matrix4mul(const Matrix4& mat) {
-			for(int i = 0; i < (int)edges.size(); i++) {
-				edges[i].matrix4mul(mat);
+		void render(Camera& camera);
+		void addEdge(Arrow3 edge) {
+			edges.push_back((edge));
+		}
+		Object operator+(const Object& obj) {
+			Object product;
+			product.edges.resize(this->edges.size() + obj.edges.size());
+			int i = 0;
+			int j = 0;
+			int k = 0;
+			while(j < (int)this->edges.size()) {
+				product.edges[i++] = this->edges[j++];
 			}
+			while(k < (int)obj.edges.size()) {
+				product.edges[i++] = obj.edges[k++];
+			}
+			return product;
+		}
+		Object matrix4mul(const Matrix4& mat) {
+			Object product;
+			for(int i = 0; i < (int)this->edges.size(); i++) {
+				product.addEdge(this->edges[i].matrix4mul(mat));
+			}
+			return product;
 		}
 		void debug() {
 			printf("x\ty\tz\n");
@@ -195,15 +214,15 @@ class Object {
 		}
 };
 
-class ObjectCreater {
+class ObjectCreator {
 	public :
-		ObjectCreater() {
+		ObjectCreator() {
 			;
 		}
 		Object cube(double side) {
 			Object product;
 			double half = side * 0.5;
-			// ∂•≤ø
+			// È°∂ÈÉ®
 			for(int i = 0; i < 4; i++) {
 				Vector3 begin((i & 02) ? -half : +half,
 				              (i & 02) ? -half : +half,
@@ -211,9 +230,9 @@ class ObjectCreater {
 				Vector3 end((i & 01) ? +half : -half,
 				            (i & 01) ? -half : +half,
 				            +half);
-				product.edges.push_back(Arrow3(begin, end));
+				product.addEdge(Arrow3(begin, end));
 			}
-			// —¸≤ø
+			// ËÖ∞ÈÉ®
 			for(int i = 0; i < 4; i++) {
 				Vector3 begin((i & 01) ? +half : -half,
 				              (i & 02) ? +half : -half,
@@ -221,9 +240,9 @@ class ObjectCreater {
 				Vector3 end((i & 01) ? +half : -half,
 				            (i & 02) ? +half : -half,
 				            -half);
-				product.edges.push_back(Arrow3(begin, end));
+				product.addEdge(Arrow3(begin, end));
 			}
-			// µ◊≤ø
+			// Â∫ïÈÉ®
 			for(int i = 0; i < 4; i++) {
 				Vector3 begin((i & 02) ? -half : +half,
 				              (i & 02) ? -half : +half,
@@ -231,31 +250,34 @@ class ObjectCreater {
 				Vector3 end((i & 01) ? +half : -half,
 				            (i & 01) ? -half : +half,
 				            -half);
-				product.edges.push_back(Arrow3(begin, end));
+				product.addEdge(Arrow3(begin, end));
 			}
 			return product;
 		}
-		Object grid(double side, int n) {
+		Object grid(double side, int a, int b) {
 			Object product;
-			double half = side * 0.5;
-			double side_n = side / n;
-			for(int i = 0; i <= n; i++) {
-				Vector3 begin(i * side_n - half, 0 - half, 0);
-				Vector3 end(i * side_n - half, side - half, 0);
-				product.edges.push_back(Arrow3(begin, end));
+			for(int yi = 0; yi <= b; yi++) {
+				Vector3 begin(0.0, yi * side, 0.0);
+				Vector3 end(a * side, yi * side, 0.0);
+				product.addEdge(Arrow3(begin, end));
 			}
-			for(int i = 0; i <= n; i++) {
-				Vector3 begin(0 - half, i * side_n - half, 0);
-				Vector3 end(side - half, i * side_n - half, 0);
-				product.edges.push_back(Arrow3(begin, end));
+			for(int xi = 0; xi <= a; xi++) {
+				Vector3 begin(xi * side, 0.0, 0.0);
+				Vector3 end(xi * side, b * side, 0.0);
+				product.addEdge(Arrow3(begin, end));
 			}
+			product.matrix4mul(Matrix4(1.0).translate(
+			                       Vector3(
+			                           - side * a * 0.5,
+			                           - side * b * 0.5,
+			                           0.0)));
 			return product;
 		}
 		Object ball(double radius) {
 			Object product;
 			double pi_10 = M_PI * 0.1;
 			double pi_8 = M_PI * 0.125;
-			// ÃÌº”æ≠œﬂ 20
+			// Ê∑ªÂä†ÁªèÁ∫ø 20
 			for(int i = 0; i < 20; i++) {
 				for(int j = 0; j < 4; j++) {
 					double x_0 = radius * cos(i * pi_10);
@@ -266,7 +288,7 @@ class ObjectCreater {
 					Vector3 end(x_0 * cos((j + 1) * pi_8),
 					            y_0 * cos((j + 1) * pi_8),
 					            radius * sin((j + 1) * pi_8));
-					product.edges.push_back(Arrow3(begin, end));
+					product.addEdge(Arrow3(begin, end));
 				}
 				for(int j = 0; j > -4; j--) {
 					double x_0 = radius * cos(i * pi_10);
@@ -277,10 +299,10 @@ class ObjectCreater {
 					Vector3 end(x_0 * cos((j - 1) * pi_8),
 					            y_0 * cos((j - 1) * pi_8),
 					            radius * sin((j - 1) * pi_8));
-					product.edges.push_back(Arrow3(begin, end));
+					product.addEdge(Arrow3(begin, end));
 				}
 			}
-			// ÃÌº”Œ≥œﬂ 7
+			// Ê∑ªÂä†Á∫¨Á∫ø 7
 			for(int j = -3; j <= 3; j++) {
 				double z_0 = radius * sin(j * pi_8);
 				for(int i = 0; i < 20; i++) {
@@ -290,20 +312,21 @@ class ObjectCreater {
 					Vector3 end(radius * cos((i + 1) * pi_10) * cos(j * pi_8),
 					            radius * sin((i + 1) * pi_10) * cos(j * pi_8),
 					            z_0);
-					product.edges.push_back(Arrow3(begin, end));
+					product.addEdge(Arrow3(begin, end));
 				}
 			}
 			return product;
 		}
-		~ObjectCreater() {
+		~ObjectCreator() {
 			;
 		}
 };
 
 class Camera {
 	private :
-		const double fov = 50.0;
-		const double aspect = 1.0;
+		const double _sight = 150.0;
+		const double _fov = 50.0;
+		const double _aspect = 1.0;
 		const double _near = 0.1;
 		const double _far = 200.0;
 
@@ -316,209 +339,173 @@ class Camera {
 			ang.x = ang.y = ang.z = 0.0;
 		}
 
-		double getFov() {
-			return fov;
+		const double getSight() {
+			return this->_sight;
 		}
-		double getAspect() {
-			return aspect;
+		const double getFov() {
+			return this->_fov;
 		}
-		double getNear() {
-			return _near;
+		const double getAspect() {
+			return this->_aspect;
 		}
-		double getFar() {
-			return _far;
+		const double getNear() {
+			return this->_near;
+		}
+		const double getFar() {
+			return this->_far;
 		}
 		~Camera() {
 			;
 		}
 };
 
-void interact(Camera& camera) {
-	const double SPEED = 1.0;
-	const double SIGHT_SPEED = M_PI / 180.0;
-	if(keystate(87)) {
-		camera.pos.x += SPEED * cos(camera.ang.z);
-		camera.pos.y += SPEED * sin(camera.ang.z);
-	}
-	if(keystate(83)) {
-		camera.pos.x -= SPEED * cos(camera.ang.z);
-		camera.pos.y -= SPEED * sin(camera.ang.z);
-	}
-	if(keystate(65)) {
-		camera.pos.x += SPEED * cos(camera.ang.z - M_PI / 2);
-		camera.pos.y += SPEED * sin(camera.ang.z - M_PI / 2);
-	}
-	if(keystate(68)) {
-		camera.pos.x -= SPEED * cos(camera.ang.z - M_PI / 2);
-		camera.pos.y -= SPEED * sin(camera.ang.z - M_PI / 2);
-	}
-	if(keystate(key_shift)) {
-		camera.pos.z -= SPEED ;
-	} else if(keystate(key_space)) {
-		camera.pos.z += SPEED ;
-	}
-
-	if(camera.ang.y <= M_PI / 2 && keystate(key_up)) {
-		camera.ang.y += SIGHT_SPEED ;
-	} else if(camera.ang.y >= - M_PI / 2 && keystate(key_down)) {
-		camera.ang.y -= SIGHT_SPEED ;
-	}
-	if(keystate(key_right)) {
-		camera.ang.z += SIGHT_SPEED ;
-		if(camera.ang.z > M_PI) {
-			camera.ang.z -= 2 * M_PI;
+bool Object::cut(Arrow3& arr, double n) {
+	// todo : ËøôÈáåÂÖàË£Å x <= near ÁöÑÈÉ®ÂàÜÔºåÂÖ∂‰ΩôÁöÑ‰ª•ÂêéÂÜçËØ¥
+	Vector3 begin = arr.begin;
+	Vector3 end = arr.end;
+	if(begin.x > n && end.x > n) {
+		return true;
+	} else if(begin.x <= n && end.x <= n) {
+		return false;
+	} else {
+		double y = ((n - end.x) * begin.y - (n - begin.x) * end.y)
+		           / (begin.x - end.x);
+		double z = ((n - end.x) * begin.z - (n - begin.x) * end.z)
+		           / (begin.x - end.x);
+		if(begin.x > n) {
+			arr.end.x = n;
+			arr.end.y = y;
+			arr.end.z = z;
+		} else {
+			arr.begin.x = n;
+			arr.begin.y = y;
+			arr.begin.z = z;
 		}
-	} else if(keystate(key_left)) {
-		camera.ang.z -= SIGHT_SPEED ;
-		if(camera.ang.z < - M_PI) {
-			camera.ang.z += 2 * M_PI;
+		return true;
+	}
+}
+
+void Object::render(Camera& camera) {
+	Object self_copy = *this;
+	Vector3 pos = camera.pos;
+	Vector3 ang = camera.ang;
+	double sight = camera.getSight();
+
+	// ‰∏ñÁïåÂùêÊ†á -> Áõ∏Êú∫ÂùêÊ†á
+	self_copy.matrix4mul(Matrix4(1.0)
+	                     .translate(-pos)
+	                     .revolveZ(-ang.z)
+	                     .revolveY(+ang.y)
+	                     .revolveX(-ang.x));
+	for(int i = 0; i < (int)self_copy.edges.size(); i++) {
+		// Ë£ÅÂâ™
+		bool succ = cut(self_copy.edges[i], camera.getNear());
+		if(succ) {
+			// Áõ∏Êú∫ÂùêÊ†á -> Â±èÂπïÂùêÊ†áÔºåÊ∏≤ÊüìÁ∫øÊÆµ
+			Vector3 begin = self_copy.edges[i].begin;
+			Vector3 end = self_copy.edges[i].end;
+			line(
+			    + begin.y * sight / begin.x + SCREEN_WIDTH / 2.0,
+			    - begin.z * sight / begin.x + SCREEN_HEIGHT / 2.0,
+			    + end.y * sight / end.x + SCREEN_WIDTH / 2.0,
+			    - end.z * sight / end.x + SCREEN_HEIGHT / 2.0
+			);
 		}
 	}
 }
 
-class Renderer {
+class Game {
 	private :
-		const double _sight = 150.0;
+		ObjectCreator _creator;
 		Camera _camera;
-		bool cut(Arrow3& arr, Camera camera) {
-			// todo : ’‚¿Ôœ»≤√ x <= near µƒ≤ø∑÷£¨∆‰”‡µƒ“‘∫Û‘ŸÀµ
-			Vector3 begin = arr.begin;
-			Vector3 end = arr.end;
-			double n = camera.getNear();
-			if(begin.x > n && end.x > n) {
-				return true;
-			} else if(begin.x <= n && end.x <= n) {
-				return false;
-			} else {
-				double y = ((n - end.x) * begin.y - (n - begin.x) * end.y)
-				           / (begin.x - end.x);
-				double z = ((n - end.x) * begin.z - (n - begin.x) * end.z)
-				           / (begin.x - end.x);
-				if(begin.x > n) {
-					arr.end.x = n;
-					arr.end.y = y;
-					arr.end.z = z;
-				} else {
-					arr.begin.x = n;
-					arr.begin.y = y;
-					arr.begin.z = z;
-				}
-				return true;
+		vector<Object> _obj_list;
+		const int FPS = 60;
+
+		void interact(Camera& camera) {
+			const double SPEED = 1.0;
+			const double SIGHT_SPEED = M_PI / 180.0;
+			if(keystate(87)) {
+				camera.pos.x += SPEED * cos(camera.ang.z);
+				camera.pos.y += SPEED * sin(camera.ang.z);
 			}
-		}
-		void _render(Object obj) {
-			//  ¿ΩÁ◊¯±Í -> œ‡ª˙◊¯±Í
-			obj.matrix4mul(Matrix4(1.0)
-			               .translate(-_camera.pos)
-			               .revolveZ(-_camera.ang.z)
-			               .revolveY(+_camera.ang.y)
-			               .revolveX(-_camera.ang.x));
-			for(int i = 0; i < (int)obj.edges.size(); i++) {
-				// ≤√ºÙ
-				bool succ = cut(obj.edges[i], _camera);
-				if(succ) {
-					// œ‡ª˙◊¯±Í -> ∆¡ƒª◊¯±Í£¨‰÷»æœﬂ∂Œ
-					Vector3 begin = obj.edges[i].begin;
-					Vector3 end = obj.edges[i].end;
-					line(
-					    + begin.y * _sight / begin.x + SCREEN_WIDTH / 2.0,
-					    - begin.z * _sight / begin.x + SCREEN_HEIGHT / 2.0,
-					    + end.y * _sight / end.x + SCREEN_WIDTH / 2.0,
-					    - end.z * _sight / end.x + SCREEN_HEIGHT / 2.0
-					);
+			if(keystate(83)) {
+				camera.pos.x -= SPEED * cos(camera.ang.z);
+				camera.pos.y -= SPEED * sin(camera.ang.z);
+			}
+			if(keystate(65)) {
+				camera.pos.x += SPEED * cos(camera.ang.z - M_PI / 2);
+				camera.pos.y += SPEED * sin(camera.ang.z - M_PI / 2);
+			}
+			if(keystate(68)) {
+				camera.pos.x -= SPEED * cos(camera.ang.z - M_PI / 2);
+				camera.pos.y -= SPEED * sin(camera.ang.z - M_PI / 2);
+			}
+			if(keystate(key_shift)) {
+				camera.pos.z -= SPEED ;
+			} else if(keystate(key_space)) {
+				camera.pos.z += SPEED ;
+			}
+
+			if(camera.ang.y <= M_PI / 2 && keystate(key_up)) {
+				camera.ang.y += SIGHT_SPEED ;
+			} else if(camera.ang.y >= - M_PI / 2 && keystate(key_down)) {
+				camera.ang.y -= SIGHT_SPEED ;
+			}
+			if(keystate(key_right)) {
+				camera.ang.z += SIGHT_SPEED ;
+				if(camera.ang.z > M_PI) {
+					camera.ang.z -= 2 * M_PI;
+				}
+			} else if(keystate(key_left)) {
+				camera.ang.z -= SIGHT_SPEED ;
+				if(camera.ang.z < - M_PI) {
+					camera.ang.z += 2 * M_PI;
 				}
 			}
 		}
-	public :
-		Renderer() {
-			;
+		void printDebugInfo() {
+			xyprintf(0, 0, "%.2f", getfps());
+			xyprintf(0, 20, "%.2lf %.2lf %.2lf",
+			         _camera.pos.x,
+			         _camera.pos.y,
+			         _camera.pos.z);
+			xyprintf(0, 40, "%.2lf %.2lf %.2lf",
+			         _camera.ang.x / M_PI * 180,
+			         _camera.ang.y / M_PI * 180,
+			         _camera.ang.z / M_PI * 180);
 		}
-		void updataCamera(Camera& camera) {
-			_camera.pos = camera.pos;
-			_camera.ang = camera.ang;
-		}
-		void renderObj(Object obj, const Vector3& dv,
-		               const Vector3& sv,
-		               const Vector3& av) {
-			// æ÷≤ø◊¯±Í ->  ¿ΩÁ◊¯±Í
-			obj.matrix4mul(Matrix4(1.0)
-			               .translate(dv)
-			               .scale(sv)
-			               .revolveX(av.x)
-			               .revolveY(av.y)
-			               .revolveZ(av.z));
-			_render(obj);
-		}
-		void renderObj(Object obj) {
-			_render(obj);
-		}
-		void debug() {
-			int FPS = 60;
-			Object obj_1, obj_2, obj_3;
-			ObjectCreater obj_creater;
-			obj_1 = obj_creater.cube(10.0);
-			obj_1.matrix4mul(Matrix4(1.0).translate(Vector3(50.0, 0.0, 5.0)));
-			obj_2 = obj_creater.grid(200.0, 20);
-			obj_3 = obj_creater.ball(15.0);
-			obj_3.matrix4mul(Matrix4(1.0).translate(Vector3(40.0, 30.0, 20.0)));
+		void mainLoop() {
+			Object obj;
+			obj = _creator.ball((20.0)) + _creator.ball((10.0));
+			obj = obj.matrix4mul(Matrix4(1.0).translate(
+			                         Vector3(0.0, 0.0, 30.0)));
 			for(; is_run(); delay_fps(FPS)) {
 				cleardevice();
 				interact(_camera);
-//				_render(obj_1);
-//				_render(obj_2);
-//				_render(obj_3);
-				Vector3 zero_v;
-				Vector3 one_v(1.0, 1.0, 1.0);
-				renderObj(obj_1, zero_v, one_v, zero_v);
-				renderObj(obj_2, zero_v, one_v, zero_v);
-				renderObj(obj_3, zero_v, one_v, zero_v);				
-				xyprintf(0, 0, "%.2f", getfps());
-				xyprintf(0, 20, "%.2lf %.2lf %.2lf",
-				         _camera.pos.x,
-				         _camera.pos.y,
-				         _camera.pos.z);
-				xyprintf(0, 40, "%.2lf %.2lf %.2lf",
-				         _camera.ang.x / M_PI * 180,
-				         _camera.ang.y / M_PI * 180,
-				         _camera.ang.z / M_PI * 180);
+				for(int i = 0; i < (int)_obj_list.size(); i++) {
+					_obj_list[i].render(_camera);
+				}
+				obj = obj.matrix4mul(Matrix4(1.0).revolveZ(0.005));
+				obj.render(_camera);
+				printDebugInfo();
 			}
 		}
-//		void debug2() {
-//			Object obj;
-//			ObjectCreater obj_creater;
-//			obj = obj_creater.cube(10.0);
-//			obj.matrix4mul(Matrix4(1.0).translate(Vector3(100.0, 0.0, 10.0)));
-//			cleardevice();
-//			_render(obj);
-//			xyprintf(0, 20, "%.2lf %.2lf %.2lf",
-//			         _camera.pos.x,
-//			         _camera.pos.y,
-//			         _camera.pos.z);
-//			xyprintf(0, 40, "%.2lf %.2lf %.2lf",
-//			         _camera.ang.x / M_PI * 180,
-//			         _camera.ang.y / M_PI * 180,
-//			         _camera.ang.z / M_PI * 180);
-//			obj.debug();
-//		}
-		~Renderer() {
+	public :
+		Game() {
+			initgraph(SCREEN_WIDTH, SCREEN_HEIGHT, INIT_RENDERMANUAL);
+			_obj_list.push_back(_creator.grid(10.0, 20, 20));
+			_camera.pos = Vector3(0.0, 0.0, 5.0);
+		}
+		void run() {
+			mainLoop();
+		}
+		~Game() {
 			;
 		}
 };
 
 int main() {
-	Object obj;
-	ObjectCreater obj_creater;
-	Camera car;
-	Renderer ren;
-
-	obj = obj_creater.cube(10.0);
-	car.pos = Vector3(0.0, 0.0, 20.0);
-	car.ang = Vector3(0.0, 0.0, 0.0);
-
-	initgraph(SCREEN_WIDTH, SCREEN_HEIGHT, INIT_RENDERMANUAL);
-	ren.updataCamera(car);
-	ren.debug();
-	getch();
-
+	Game game;
+	game.run();
 	return 0;
 }
