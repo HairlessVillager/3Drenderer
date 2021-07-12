@@ -3,7 +3,6 @@
 #include <cmath>
 #include <list>
 #include <vector>
-#include "3Drenderer.h"
 using namespace std;
 
 //#define NEGE
@@ -13,6 +12,15 @@ using namespace std;
 const int SCREEN_WIDTH = 640.0;
 const int SCREEN_HEIGHT = 480.0;
 const int FPS = 60;
+
+class Vector3;
+class Arrow3;
+class Matrix4;
+class Camera;
+class Object;
+class Renderer;
+class ObjectCreater;
+class Game;
 
 class Vector3 {
 	public :
